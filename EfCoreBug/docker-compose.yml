@@ -1,0 +1,26 @@
+﻿version: "2.4"
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2019-CU5-ubuntu-16.04
+    ports:
+      - 1433:1433
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: Top-Secret
+      MSSQL_PID: Developer
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -U sa -P Top-Secret || exit 1
+      interval: 2s
+      timeout: 2s
+      retries: 10
+      start_period: 15s
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+     - ConnectionStringAzure=Data Source=***.database.windows.net; Database=MyDb; persist security info=True; user id=***; password=***; multipleactiveresultsets=False;
+     - ConnectionStringLocal=Data Source=db,1433; Database=MyDb; User Id=sa; Password=Top-Secret; Connection Timeout=60; ConnectRetryCount=8; ConnectRetryInterval=2; multipleactiveresultsets=False;
+    depends_on:
+      db:
+        condition: service_healthy
